@@ -9,6 +9,9 @@ public record ThreatSearchResponse(
     public record ThreatIndicatorResponse(
             Long indicatorId,
             String indicatorValue,
+            String indicatorType,
+            String sourceName,
+            String detectedAt,
             String actionStatus
     ) {}
 }

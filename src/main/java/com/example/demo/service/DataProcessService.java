@@ -58,46 +58,72 @@ public class DataProcessService {
      * [API 3] 실시간 탐지 현황 요약
      */
     public RealtimeSummaryResponse getRealtimeSummary() {
+        // 1. 기존 데이터 조회 로직 (그대로 유지)
         LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
         long hourlyCount = parsedDataRepository.countByCreatedAtAfter(oneHourAgo);
         long activeEngines = siteRepository.countByCrawlerStatus("ALIVE");
 
-        List<RealtimeSummaryResponse.AlertResponse> latestAlerts = parsedDataRepository
+        // 2. 리스트 변환
+        List<RealtimeSummaryResponse.ThreatResponse> threats = parsedDataRepository
                 .findTop5ByOrderByCreatedAtDesc()
                 .stream()
-                .map(data -> new RealtimeSummaryResponse.AlertResponse(
-                        data.getId(),
-                        data.getLeakTitle(),
-                        data.getCreatedAt()
-                ))
+                .map(data -> {
+                    // [수정] createdAt이 null이면 현재 시간으로 대체해서 500 에러 방지
+                    String timeLabel = (data.getCreatedAt() != null)
+                            ? data.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+                            : java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+
+                    return new RealtimeSummaryResponse.ThreatResponse(
+                            data.getId(),
+                            data.getIndicatorValue() != null ? data.getIndicatorValue() : "N/A",
+                            data.getSourceName() != null ? data.getSourceName() : "Unknown",
+                            timeLabel
+                    );
+                })
                 .toList();
 
-        return new RealtimeSummaryResponse(hourlyCount, activeEngines, latestAlerts);
+        return new RealtimeSummaryResponse(
+                new RealtimeSummaryResponse.SummaryResponse(hourlyCount, activeEngines),
+                threats
+        );
     }
 
     /**
-     /**
-     * [API 4] 유출 데이터 검색 및 목록 조회
+     * [API 4] 위협 데이터 검색 (500 에러 수정본)
      */
     public ThreatSearchResponse searchThreats(ThreatSearchRequest request) {
-        // 1. 페이지 요청 객체 생성 (기존과 동일)
-        Pageable pageable = PageRequest.of(request.page(), request.size());
+        // 1. 페이지/사이즈 null 방어 (PowerShell에서 안 보낼 때 대비)
+        int page = (request.page() != null) ? request.page() : 0;
+        int size = (request.size() != null) ? request.size() : 10;
+        Pageable pageable = PageRequest.of(page, size);
 
-        // 2. 레포지토리 호출
-        Page<ThreatSearchResponse.ThreatIndicatorResponse> resultPage =
-                indicatorRepository.searchIndicators(request, pageable);
+        // 2. 전체 데이터 조회
+        Page<ParsedThreatData> resultPage = parsedDataRepository.findAll(pageable);
 
-        // 3. [수정] null 방어 로직 추가
-        // 만약 결과가 null이면 빈 리스트와 0페이지 정보를 담은 객체를 즉시 반환
-        if (resultPage == null) {
+        if (resultPage == null || resultPage.isEmpty()) {
             return new ThreatSearchResponse(java.util.Collections.emptyList(), 0);
         }
 
-        // 4. 결과가 있을 때만 정상 반환
-        return new ThreatSearchResponse(
-                resultPage.getContent(),
-                resultPage.getTotalPages()
-        );
+        // 3. 변환 로직
+        List<ThreatSearchResponse.ThreatIndicatorResponse> content = resultPage.getContent().stream()
+                .map(data -> {
+                    // 날짜가 null이면 오늘 날짜로 표시 (서버 다운 방지)
+                    String dateLabel = (data.getCreatedAt() != null)
+                            ? data.getCreatedAt().toLocalDate().toString()
+                            : java.time.LocalDate.now().toString();
+
+                    return new ThreatSearchResponse.ThreatIndicatorResponse(
+                            data.getId(),
+                            data.getIndicatorValue() != null ? data.getIndicatorValue() : "N/A",
+                            "EMAIL",
+                            data.getSourceName() != null ? data.getSourceName() : "Unknown",
+                            dateLabel,
+                            "OPEN"
+                    );
+                })
+                .toList();
+
+        return new ThreatSearchResponse(content, resultPage.getTotalPages());
     }
 
     /**
@@ -116,14 +142,17 @@ public class DataProcessService {
     }
 
     /**
-     * [API 6] 엔진 상태 모니터링 목록 조회
+     * [API 6] 엔진 상태 모니터링 목록 조회 (수정본)
      */
     public EngineStatusResponse getEngineStatuses() {
         List<EngineStatusResponse.EngineInfo> engineInfos = siteRepository.findAll().stream()
                 .map(site -> new EngineStatusResponse.EngineInfo(
                         site.getId(),
                         site.getSourceName(),
-                        site.getCrawlerStatus()
+                        site.getCrawlerStatus(),
+                        site.getUpdatedAt() != null ?
+                                site.getUpdatedAt().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) :
+                                "N/A"
                 ))
                 .toList();
 
@@ -135,8 +164,7 @@ public class DataProcessService {
      */
     @Transactional
     public SettingResponse updateSystemSettings(SettingRequest request) {
-        // [사진 13, 14 대응] findFirstByOrderBySettingIdAsc -> findFirstByOrderByIdAsc
-        // 만약 레포지토리에 해당 메서드가 없다면, findFirstByOrderByIdAsc로 이름을 맞춰주세요.
+
         SystemSetting setting = settingRepository.findFirstByOrderByIdAsc()
                 .orElseGet(SystemSetting::new);
 
@@ -145,11 +173,10 @@ public class DataProcessService {
 
         keywordRepository.deleteAll();
         List<DetectionKeyword> newKeywords = request.keywords().stream()
-                .map(DetectionKeyword::of) // [수정] new DetectionKeyword(k) -> of(k)
+                .map(DetectionKeyword::of)
                 .toList();
         keywordRepository.saveAll(newKeywords);
 
-        // [사진 13 대응] getSettingId() -> getId()
         return new SettingResponse(savedSetting.getId(), savedSetting.getUpdatedAt());
     }
 }

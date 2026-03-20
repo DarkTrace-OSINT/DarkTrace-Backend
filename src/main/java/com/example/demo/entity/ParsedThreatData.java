@@ -4,27 +4,28 @@ import jakarta.persistence.*; // 필수 Import 추가!
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Table(name = "parsed_threat_data")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EntityListeners(AuditingEntityListener.class)
 public class ParsedThreatData extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private Long rawId; // 원본 Raw 데이터와의 연결 고리
-
-    private String leakTitle; // 유출 제목 (예: "XX 사이트 계정 유출")
+    private Long rawId;
+    private String indicatorValue;
+    private String sourceName;
+    private String leakTitle;
 
     @Column(columnDefinition = "TEXT")
-    private String leakContent; // 유출 내용 (텍스트가 길 수 있으니 TEXT 타입 유지)
+    private String leakContent;
 
-    public static ParsedThreatData create(Long rawId, String title, String content) {
+    public static ParsedThreatData create(Long rawId, String indicatorValue, String sourceName, String title, String content) {
         ParsedThreatData data = new ParsedThreatData();
         data.rawId = rawId;
+        data.indicatorValue = indicatorValue;
+        data.sourceName = sourceName;
         data.leakTitle = title;
         data.leakContent = content;
         return data;

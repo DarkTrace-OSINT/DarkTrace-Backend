@@ -5,6 +5,6 @@ public record ThreatSearchRequest(
         Long siteId,
         String indicatorType,
         String actionStatus,
-        int page,
-        int size
+        Integer page,
+        Integer size
 ) {}
