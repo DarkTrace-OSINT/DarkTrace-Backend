@@ -173,6 +173,7 @@ public class DataProcessService {
 
         keywordRepository.deleteAll();
         List<DetectionKeyword> newKeywords = request.keywords().stream()
+                .distinct()
                 .map(DetectionKeyword::of)
                 .toList();
         keywordRepository.saveAll(newKeywords);
