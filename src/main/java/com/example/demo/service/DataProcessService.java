@@ -171,11 +171,13 @@ public class DataProcessService {
         setting.updateConfig(request.telegramBotToken(), request.telegramChatId());
         SystemSetting savedSetting = settingRepository.save(setting);
 
-        keywordRepository.deleteAll();
+        keywordRepository.deleteAllInBatch();
+
         List<DetectionKeyword> newKeywords = request.keywords().stream()
                 .distinct()
                 .map(DetectionKeyword::of)
                 .toList();
+
         keywordRepository.saveAll(newKeywords);
 
         return new SettingResponse(savedSetting.getId(), savedSetting.getUpdatedAt());
