@@ -37,8 +37,8 @@ jobs:
         nohup java -jar \
           -Djasypt.encryptor.password="$JASYPT_PASSWORD" \
           -Dspring.datasource.url="$DB_URL" \
-          -DDB_USERNAME_ENC="$DB_USER" \
-          -DDB_PASSWORD_ENC="$DB_PASS" \
+          -Dspring.datasource.username="$DB_USER" \
+          -Dspring.datasource.password="$DB_PASS" \
           -Dspring.jpa.hibernate.ddl-auto=update \
           -Djwt.secret="local-test-secret-key-darktrace-project-2026-fighting" \
           -Djwt.expiration=86400000 \
