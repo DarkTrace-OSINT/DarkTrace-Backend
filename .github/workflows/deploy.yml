@@ -40,4 +40,5 @@ jobs:
           -DDB_USERNAME_ENC="$DB_USER" \
           -DDB_PASSWORD_ENC="$DB_PASS" \
           -Dspring.jpa.hibernate.ddl-auto=update \
+          -Djwt.secret="$JWT_SECRET" \
           build/libs/*SNAPSHOT.jar > application.log 2>&1 &
