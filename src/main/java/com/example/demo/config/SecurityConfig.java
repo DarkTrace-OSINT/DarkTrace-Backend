@@ -24,6 +24,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 미사용
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll() // [API 1]은 오픈
+                        .requestMatchers("/api/v1/dashboard/**").permitAll()
                         .requestMatchers("/api/v1/ingestion/**").permitAll() // [API 8]은 추후 별도 보안 적용
                         .anyRequest().authenticated() // 나머지는 전부 JWT 인증 필수
                 )
