@@ -22,4 +22,12 @@ public class GlobalExceptionHandler {
                 .status(500)
                 .body(ApiResponse.error(500, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."));
     }
+
+    @ExceptionHandler(DataParsingException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleDataParsingException(DataParsingException e) {
+        ErrorCode ec = e.getErrorCode(); // Enum을 가져옴
+        return ResponseEntity
+                .status(ec.getStatus())
+                .body(ApiResponse.error(ec.getStatus(), ec.getCode(), ec.getMessage()));
+    }
 }
