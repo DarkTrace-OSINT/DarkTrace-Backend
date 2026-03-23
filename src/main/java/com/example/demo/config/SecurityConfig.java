@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import com.example.demo.global.filter.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,15 +27,26 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // REST API이므로 해제
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 미사용
+
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+                            response.setHeader("Access-Control-Allow-Credentials", "true");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        })
+                )
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/v1/auth/**").permitAll() // [API 1]은 오픈
-                        .requestMatchers("/api/v1/ingestion/**").permitAll() // [API 8]은 추후 별도 보안 적용
-                        .anyRequest().authenticated() // 나머지는 전부 JWT 인증 필수
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/ingestion/**").permitAll()
+                        .anyRequest().authenticated()
                 )
-                // JWT 필터를 시큐리티 필터 체인에 등록
+
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -50,7 +62,7 @@ public class SecurityConfig {
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
