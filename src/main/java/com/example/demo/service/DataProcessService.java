@@ -64,7 +64,7 @@ public class DataProcessService {
     }
 
     /**
-     * [API 3] 실시간 탐지 현황 요약 (팀장님 설계안 100% 반영)
+     * [API 3] 실시간 탐지 현황 요약
      */
     public RealtimeSummaryResponse getRealtimeSummary() {
         // 1. 기준 시간 설정
