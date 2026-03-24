@@ -12,19 +12,22 @@ import java.util.List;
 
 public interface ThreatIndicatorRepository extends JpaRepository<ThreatIndicator, Long> {
 
-    // [API 2] 사이트별 통계 조회를 위한 집계 쿼리
-    // 별도 DTO 클래스 없이 Object 배열로 받아서 Service에서 가공합니다.
+    // [API 2-1] 사이트별 통계 조회
     @Query("SELECT t.siteId, COUNT(t) FROM ThreatIndicator t GROUP BY t.siteId")
     List<Object[]> countGroupBySiteId();
 
-    // [API 4] 복잡한 필터링 조회를 위한 커스텀 쿼리 (Default Method로 구현하여 Impl 생략)
+    // [API 2-2] 최근 7일간의 날짜별 유출 건수 조회
+    // Native Query를 사용하여 DB에서 직접 날짜별로 묶어서 7줄만 가져옴.
+    @Query(value = "SELECT DATE_FORMAT(created_at, '%m/%d') as date, COUNT(*) as count " +
+            "FROM threat_indicators " +
+            "WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) " +
+            "GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d') " +
+            "ORDER BY date ASC", nativeQuery = true)
+    List<Object[]> findDailyStatsLast7Days();
+
+    // [API 4]
     default Page<ThreatSearchResponse.ThreatIndicatorResponse> searchIndicators(
             ThreatSearchRequest request, Pageable pageable) {
-
-        // 실제 구현 시에는 여기서 JPAQueryFactory를 사용하여
-        // keyword, siteId, actionStatus 등을 동적으로 조인 및 필터링합니다.
-        // (Querydsl 설정이 되어 있으므로 여기서 바로 쿼리 작성이 가능합니다.)
-
-        return null; // (실제 쿼리 로직은 팀장님 환경의 Q클래스 생성 후 완성됩니다.)
+        return null;
     }
 }

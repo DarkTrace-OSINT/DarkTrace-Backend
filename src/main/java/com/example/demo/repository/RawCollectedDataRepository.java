@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RawCollectedDataRepository extends JpaRepository<RawCollectedData, Long> {
-    // 깡통으로 두셔도 JpaRepository가 save() 메서드를 자동으로 만들어줍니다!
+    // 깡통으로 둬도 JpaRepository가 save() 메서드를 자동으로 만들어줌
 }

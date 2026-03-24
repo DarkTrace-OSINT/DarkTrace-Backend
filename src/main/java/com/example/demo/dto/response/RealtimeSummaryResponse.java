@@ -3,18 +3,23 @@ package com.example.demo.dto.response;
 import java.util.List;
 
 public record RealtimeSummaryResponse(
-        SummaryResponse summary,      // 낱개 필드 대신 객체로 묶음
-        List<ThreatResponse> threats  // latestAlerts 대신 threats
+        SummaryResponse summary,
+        List<ThreatResponse> threats
 ) {
     public record SummaryResponse(
-            long criticalCount,
-            long totalCount
+            long totalCount,      // [1] 오늘 총합
+            long lastHourCount,   // [2] 최근 1시간 탐지
+            long thisWeekCount,   // [3] 이번 주 탐지
+            long openCount,       // [4] Open (미조치)
+            long resolvedCount,   // [5] Resolved (조치완료)
+            long criticalCount    // 크리티컬 위협
     ) {}
 
     public record ThreatResponse(
             Long id,
             String indicatorValue,
             String sourceName,
-            String detectedAt      // LocalDateTime 대신 String (포맷팅용)
+            String detectedAt,    // "20:15" 형태의 포맷팅된 문자열
+            String actionStatus   // "OPEN", "RESOLVED" 등의 상태값
     ) {}
 }
