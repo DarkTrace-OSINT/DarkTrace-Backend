@@ -21,7 +21,7 @@ public interface ThreatIndicatorRepository extends JpaRepository<ThreatIndicator
     @Query(value = "SELECT DATE_FORMAT(created_at, '%m/%d') as date, COUNT(*) as count " +
             "FROM threat_indicators " +
             "WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) " +
-            "GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d') " +
+            "GROUP BY DATE_FORMAT(created_at, '%m/%d') " +
             "ORDER BY date ASC", nativeQuery = true)
     List<Object[]> findDailyStatsLast7Days();
 
