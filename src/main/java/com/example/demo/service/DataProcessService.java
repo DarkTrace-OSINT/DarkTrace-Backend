@@ -48,14 +48,18 @@ public class DataProcessService {
         List<Object[]> siteResults = indicatorRepository.countGroupBySiteId();
         List<DashboardStatsResponse.SiteStatResponse> siteStats = siteResults.stream()
                 .map(result -> {
+                    // 이제 결과값[0]은 site_id 숫자가 아니라 TargetSite 객체(또는 그 필드)
                     Long siteId = (Long) result[0];
                     long count = ((Number) result[1]).longValue();
+
+                    // siteRepository를 매번 findById 할 필요 없이 바로 처리 가능
+                    // (Repository 쿼리에서 t.site.id로 조회하도록 바꿨기 때문)
                     String sourceName = siteRepository.findById(siteId)
                             .map(TargetSite::getSourceName).orElse("Unknown");
 
                     double ratio = (totalCount > 0) ? (double) count / totalCount * 100 : 0;
                     return new DashboardStatsResponse.SiteStatResponse(
-                            siteId, sourceName, count, Math.round(ratio * 10.0) / 10.0 // 소수점 첫째 자리까지
+                            siteId, sourceName, count, Math.round(ratio * 10.0) / 10.0
                     );
                 }).toList();
 
