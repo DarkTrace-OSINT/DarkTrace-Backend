@@ -29,61 +29,90 @@ public class DataProcessService {
     private final DetectionKeywordRepository keywordRepository;
 
     /**
-     * [API 2] 대시보드 통계 데이터 조회
+     * [API 2] 대시보드 통계 데이터 조회 (실제 DB 데이터 연동 완료)
      */
     public DashboardStatsResponse getDashboardStatistics() {
+        // 1. 총 누적 건수 (중복 제거 없이 전체 카운트)
         long totalCount = indicatorRepository.count();
-        if (totalCount == 0) return new DashboardStatsResponse(0, List.of());
+        if (totalCount == 0) return new DashboardStatsResponse(0, List.of(), List.of());
 
-        List<Object[]> results = indicatorRepository.countGroupBySiteId();
+        // 2. 최근 7일간의 일별 유출 건수 (Repository 신규 쿼리 호출)
+        List<Object[]> dailyResults = indicatorRepository.findDailyStatsLast7Days();
+        List<DashboardStatsResponse.DailyStatResponse> dailyStats = dailyResults.stream()
+                .map(result -> new DashboardStatsResponse.DailyStatResponse(
+                        (String) result[0],      // "03/24" 형태의 날짜
+                        ((Number) result[1]).longValue() // 해당 날짜의 건수
+                )).toList();
 
-        List<DashboardStatsResponse.SiteStatResponse> siteStats = results.stream()
+        // 3. 사이트별 비중 (기존 로직 유지 및 최적화)
+        List<Object[]> siteResults = indicatorRepository.countGroupBySiteId();
+        List<DashboardStatsResponse.SiteStatResponse> siteStats = siteResults.stream()
                 .map(result -> {
                     Long siteId = (Long) result[0];
-                    long count = (long) result[1];
-                    // [사진 11 대응] 엔티티 필드명 sourceName 확인 완료
+                    long count = ((Number) result[1]).longValue();
                     String sourceName = siteRepository.findById(siteId)
                             .map(TargetSite::getSourceName).orElse("Unknown");
 
-                    double ratio = (double) count / totalCount * 100;
+                    double ratio = (totalCount > 0) ? (double) count / totalCount * 100 : 0;
                     return new DashboardStatsResponse.SiteStatResponse(
-                            siteId, sourceName, count, Math.round(ratio * 10.0) / 10.0
+                            siteId, sourceName, count, Math.round(ratio * 10.0) / 10.0 // 소수점 첫째 자리까지
                     );
                 }).toList();
 
-        return new DashboardStatsResponse(totalCount, siteStats);
+        // 4. 최종 조립된 DTO 리턴
+        return new DashboardStatsResponse(totalCount, dailyStats, siteStats);
     }
 
     /**
      * [API 3] 실시간 탐지 현황 요약
      */
     public RealtimeSummaryResponse getRealtimeSummary() {
-        // 1. 기존 데이터 조회 로직 (그대로 유지)
-        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
-        long hourlyCount = parsedDataRepository.countByCreatedAtAfter(oneHourAgo);
-        long activeEngines = siteRepository.countByCrawlerStatus("ALIVE");
+        // 1. 기준 시간 설정
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime todayStart = now.with(java.time.LocalTime.MIN); // 오늘 00:00
+        LocalDateTime oneHourAgo = now.minusHours(1);               // 1시간 전
+        LocalDateTime weekStart = now.with(java.time.DayOfWeek.MONDAY).with(java.time.LocalTime.MIN); // 이번주 월요일
 
-        // 2. 리스트 변환
+        // 2. 통계 데이터 집계 (Repository 호출)
+        long totalCount = parsedDataRepository.countByCreatedAtAfter(todayStart);     // 오늘 총합
+        long lastHourCount = parsedDataRepository.countByCreatedAtAfter(oneHourAgo); // 최근 1시간
+        long thisWeekCount = parsedDataRepository.countByCreatedAtAfter(weekStart);   // 이번 주
+
+        long openCount = incidentRepository.countByActionStatus("OPEN");             // 미조치
+        long resolvedCount = incidentRepository.countByActionStatus("RESOLVED");     // 조치완료
+
+        // 크리티컬 기준: 오늘 탐지된 것 중 'BreachForums'에서 온 데이터라고 가정 (팀장님 기준에 따라 수정 가능)
+        long criticalCount = parsedDataRepository.countBySourceNameAndCreatedAtAfter("BreachForums", todayStart);
+
+        // 3. 실시간 위협 목록 (최근 5건)
         List<RealtimeSummaryResponse.ThreatResponse> threats = parsedDataRepository
                 .findTop5ByOrderByCreatedAtDesc()
                 .stream()
                 .map(data -> {
-                    // [수정] createdAt이 null이면 현재 시간으로 대체해서 500 에러 방지
                     String timeLabel = (data.getCreatedAt() != null)
                             ? data.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-                            : java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+                            : "N/A";
+
+                    // 조치 상태 조회 (연결된 인시던트가 없으면 기본 "OPEN")
+                    String status = incidentRepository.findByParsedId(data.getId())
+                            .map(IncidentResponse::getActionStatus)
+                            .orElse("OPEN");
 
                     return new RealtimeSummaryResponse.ThreatResponse(
                             data.getId(),
-                            data.getIndicatorValue() != null ? data.getIndicatorValue() : "N/A",
-                            data.getSourceName() != null ? data.getSourceName() : "Unknown",
-                            timeLabel
+                            data.getIndicatorValue(),
+                            data.getSourceName(),
+                            timeLabel,
+                            status
                     );
                 })
                 .toList();
 
+        // 4. 최종 DTO 조립
         return new RealtimeSummaryResponse(
-                new RealtimeSummaryResponse.SummaryResponse(hourlyCount, activeEngines),
+                new RealtimeSummaryResponse.SummaryResponse(
+                        totalCount, lastHourCount, thisWeekCount, openCount, resolvedCount, criticalCount
+                ),
                 threats
         );
     }
