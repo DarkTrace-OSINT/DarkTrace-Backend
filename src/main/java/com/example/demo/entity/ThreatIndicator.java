@@ -14,13 +14,19 @@ public class ThreatIndicator extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long siteId;
+
+    // 숫자 대신 TargetSite 객체와 연관관계를 맺음
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "site_id")
+    private TargetSite site;
+
     private String indicatorType;
     private String indicatorValue;
 
-    public static ThreatIndicator of(Long siteId, String type, String value) {
+    // 생성 메서드도 숫자가 아닌 객체를 받도록 수정
+    public static ThreatIndicator of(TargetSite site, String type, String value) {
         ThreatIndicator indicator = new ThreatIndicator();
-        indicator.siteId = siteId;
+        indicator.site = site;
         indicator.indicatorType = type;
         indicator.indicatorValue = value;
         return indicator;
