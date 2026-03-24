@@ -58,7 +58,8 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "https://dark-trace-frontend.vercel.app"
+                "https://dark-trace-frontend.vercel.app",
+                "https://unpercipient-woodrow-nonrecurent.ngrok-free.dev"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
