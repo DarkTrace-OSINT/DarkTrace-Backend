@@ -1,6 +1,6 @@
 package com.example.demo.global.utils;
 
-import com.example.demo.entity.TargetSite; // [추가] 이 임포트가 꼭 필요합니다!
+import com.example.demo.entity.TargetSite;
 import com.example.demo.entity.ThreatIndicator;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +17,7 @@ public class RegexParser {
     private static final String DOMAIN_REGEX = "(https?://)?([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}";
 
     /**
-     * [수정] Long siteId 대신 TargetSite site 객체를 받도록 변경!
+     * [수정] Long siteId 대신 TargetSite site 객체를 받도록 변경
      */
     public List<ThreatIndicator> parseIndicators(TargetSite site, String content) {
         List<ThreatIndicator> indicators = new ArrayList<>();

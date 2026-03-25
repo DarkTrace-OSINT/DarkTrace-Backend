@@ -27,11 +27,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
@@ -39,16 +37,17 @@ public class SecurityConfig {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         })
                 )
-
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/v1/auth/**").permitAll() // [API 1]은 오픈
+                        .requestMatchers("/api/v1/auth/**", "/login/**", "/oauth2/**").permitAll()
                         .requestMatchers("/api/v1/dashboard/**").permitAll()
-                        .requestMatchers("/api/v1/ingestion/**").permitAll() // [API 8]은 추후 별도 보안 적용
-                        .anyRequest().authenticated() // 나머지는 전부 JWT 인증 필수
-
+                        .requestMatchers("/api/v1/ingestion/**").permitAll()
+                        .anyRequest().authenticated()
                 )
-
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(endpoint -> endpoint.baseUri("/api/v1/auth/login"))
+                        .redirectionEndpoint(endpoint -> endpoint.baseUri("/api/v1/auth/callback/*"))
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -57,15 +56,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "https://dark-trace-frontend.vercel.app",
                 "https://unpercipient-woodrow-nonrecurent.ngrok-free.dev"
         ));
-
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "ngrok-skip-browser-warning"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "ngrok-skip-browser-warning", "X-API-KEY"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
