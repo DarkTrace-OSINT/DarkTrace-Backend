@@ -46,7 +46,6 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(endpoint -> endpoint.baseUri("/api/v1/auth/login"))
-                        .redirectionEndpoint(endpoint -> endpoint.baseUri("/api/v1/auth/callback/*"))
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
