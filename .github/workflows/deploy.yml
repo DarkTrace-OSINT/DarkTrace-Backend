@@ -32,6 +32,7 @@ jobs:
         DB_PASS: ${{ secrets.DB_PASSWORD_ENC }}
         GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        REDIRECT_URL: ${{ secrets.REDIRECT_URL }}
       run: |
         # 깃허브 액션이 백그라운드 프로세스 죽이지 못하게 추적 ID를 비우게함
         export RUNNER_TRACKING_ID=""
