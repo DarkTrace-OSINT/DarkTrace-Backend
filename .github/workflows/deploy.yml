@@ -26,9 +26,12 @@ jobs:
       env:
         # 인프라 단에서 관리하는 GitHub Secrets에서 값을 꺼내옵니다.
         JASYPT_PASSWORD: ${{ secrets.JASYPT_ENCRYPTOR_PASSWORD }}
+        API_KEY_SECRET: ${{ secrets.API_KEY_SECRET }}
         DB_URL: ${{ secrets.DB_URL }}
         DB_USER: ${{ secrets.DB_USERNAME_ENC }}
         DB_PASS: ${{ secrets.DB_PASSWORD_ENC }}
+        GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       run: |
         # 깃허브 액션이 백그라운드 프로세스 죽이지 못하게 추적 ID를 비우게함
         export RUNNER_TRACKING_ID=""
