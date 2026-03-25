@@ -41,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
         //구글 로그인 401 수정
-        if (path.startsWith("/api/v1/auth")) {
+        if (path.startsWith("/api/v1/auth") || path.startsWith("/login/oauth2")) {
             filterChain.doFilter(request, response);
             return;
         }
