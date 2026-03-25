@@ -22,29 +22,26 @@ jobs:
       run: |
         sudo fuser -k -n tcp 8080 || true
 
-    - name: 5. Jasypt 및 DB 환경변수 주입 후 새 서버 무중단 실행
+    - name: 5. 환경변수 주입 및 새 서버 무중단 실행
       env:
-        # 인프라 단에서 관리하는 GitHub Secrets에서 값을 꺼내옵니다.
-        JASYPT_PASSWORD: ${{ secrets.JASYPT_ENCRYPTOR_PASSWORD }}
-        API_KEY_SECRET: ${{ secrets.API_KEY_SECRET }}
+        JASYPT_ENCRYPTOR_PASSWORD: ${{ secrets.JASYPT_ENCRYPTOR_PASSWORD }}
         DB_URL: ${{ secrets.DB_URL }}
-        DB_USER: ${{ secrets.DB_USERNAME_ENC }}
-        DB_PASS: ${{ secrets.DB_PASSWORD_ENC }}
+        DB_USERNAME_ENC: ${{ secrets.DB_USERNAME_ENC }}
+        DB_PASSWORD_ENC: ${{ secrets.DB_PASSWORD_ENC }}
+        API_KEY_SECRET: ${{ secrets.API_KEY_SECRET }}
         GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         REDIRECT_URL: ${{ secrets.REDIRECT_URL }}
-     run: |
-        # 깃허브 액션이 백그라운드 프로세스 죽이지 못하게 추적 ID를 비우게함
+      run: |
         export RUNNER_TRACKING_ID=""
         
-        # 💡 못 받은 변수가 없도록 -D 옵션으로 남은 4개(API키, 구글ID/PW, 리다이렉트)를 모두 쑤셔 넣습니다!
         nohup java -jar \
           -Dlogging.level.org.springframework.security=DEBUG \
           -Dlogging.level.org.springframework.web=DEBUG \
-          -Djasypt.encryptor.password="$JASYPT_PASSWORD" \
+          -Djasypt.encryptor.password="$JASYPT_ENCRYPTOR_PASSWORD" \
           -Dspring.datasource.url="$DB_URL" \
-          -Dspring.datasource.username="$DB_USER" \
-          -Dspring.datasource.password="$DB_PASS" \
+          -Dspring.datasource.username="$DB_USERNAME_ENC" \
+          -Dspring.datasource.password="$DB_PASSWORD_ENC" \
           -Dspring.jpa.hibernate.ddl-auto=update \
           -Djwt.secret="local-test-secret-key-darktrace-project-2026-fighting" \
           -Djwt.expiration=86400000 \
