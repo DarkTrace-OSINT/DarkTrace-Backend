@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -48,16 +48,8 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(endpoint -> endpoint.baseUri("/oauth2/authorization"))
-//oauth창 확보인지 테스트                        .defaultSuccessUrl("/api/v1/dashboard/statistics")
                 );
-                //.oauth2Login(oauth2 -> oauth2
-                //                .successHandler((request, response, authentication) -> {
-                //                    // 여기서 JWT 토큰을 생성하거나 유저 정보를 가져옵니다.
-                //                    // 예시: 프론트엔드 메인 페이지로 토큰과 함께 리다이렉트
-                //                    String targetUrl = "https://dark-trace-frontend.vercel.app/dashboard";
-                //                    response.sendRedirect(targetUrl);
-                //                })
-                //        )
+
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
