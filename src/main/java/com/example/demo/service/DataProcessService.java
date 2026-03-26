@@ -85,7 +85,7 @@ public class DataProcessService {
         long openCount = incidentRepository.countByActionStatus("OPEN");             // 미조치
         long resolvedCount = incidentRepository.countByActionStatus("RESOLVED");     // 조치완료
 
-        // 크리티컬 기준: 오늘 탐지된 것 중 'BreachForums'에서 온 데이터라고 가정 (팀장님 기준에 따라 수정 가능)
+        // 크리티컬 기준: 오늘 탐지된 것 중 'BreachForums'에서 온 데이터라고 가정
         long criticalCount = parsedDataRepository.countBySourceNameAndCreatedAtAfter("BreachForums", todayStart);
 
         // 3. 실시간 위협 목록 (최근 5건)
@@ -121,11 +121,8 @@ public class DataProcessService {
         );
     }
 
-    /**
-     * [API 4] 위협 데이터 검색 (500 에러 수정본)
-     */
     public ThreatSearchResponse searchThreats(ThreatSearchRequest request) {
-        // 1. 페이지/사이즈 null 방어 (PowerShell에서 안 보낼 때 대비)
+        // 1. 페이지/사이즈 방어
         int page = (request.page() != null) ? request.page() : 0;
         int size = (request.size() != null) ? request.size() : 10;
         Pageable pageable = PageRequest.of(page, size);
@@ -140,15 +137,15 @@ public class DataProcessService {
         // 3. 변환 로직
         List<ThreatSearchResponse.ThreatIndicatorResponse> content = resultPage.getContent().stream()
                 .map(data -> {
-                    // 날짜가 null이면 오늘 날짜로 표시 (서버 다운 방지)
                     String dateLabel = (data.getCreatedAt() != null)
                             ? data.getCreatedAt().toLocalDate().toString()
                             : java.time.LocalDate.now().toString();
 
                     return new ThreatSearchResponse.ThreatIndicatorResponse(
+                            data.getTitle() != null ? data.getTitle() : "제목 없음",
                             data.getId(),
                             data.getIndicatorValue() != null ? data.getIndicatorValue() : "N/A",
-                            "EMAIL",
+                            "EMAIL", // 필요시 data.getType()으로 변경
                             data.getSourceName() != null ? data.getSourceName() : "Unknown",
                             dateLabel,
                             "OPEN"
@@ -175,7 +172,7 @@ public class DataProcessService {
     }
 
     /**
-     * [API 6] 엔진 상태 모니터링 목록 조회 (수정본)
+     * [API 6] 엔진 상태 모니터링 목록 조회
      */
     public EngineStatusResponse getEngineStatuses() {
         List<EngineStatusResponse.EngineInfo> engineInfos = siteRepository.findAll().stream()
@@ -201,7 +198,11 @@ public class DataProcessService {
         SystemSetting setting = settingRepository.findFirstByOrderByIdAsc()
                 .orElseGet(SystemSetting::new);
 
-        setting.updateConfig(request.telegramBotToken(), request.telegramChatId());
+        setting.updateConfig(
+                request.telegramBotToken(),
+                request.telegramChatId(),
+                request.isAlertEnabled()
+        );
         SystemSetting savedSetting = settingRepository.save(setting);
 
         keywordRepository.deleteAllInBatch();

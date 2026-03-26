@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class DashboardController {
 
-    private final DataProcessService dataProcessService; // 수정: DataProcessService 호출
+    private final DataProcessService dataProcessService;
 
     @PostMapping("/statistics")
     public ApiResponse<DashboardStatsResponse> getStatistics() {

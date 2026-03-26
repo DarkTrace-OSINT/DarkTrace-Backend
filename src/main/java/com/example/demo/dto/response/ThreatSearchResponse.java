@@ -7,6 +7,7 @@ public record ThreatSearchResponse(
         int totalPages
 ) {
     public record ThreatIndicatorResponse(
+            String title,
             Long indicatorId,
             String indicatorValue,
             String indicatorType,
