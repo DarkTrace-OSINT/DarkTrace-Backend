@@ -48,7 +48,9 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(endpoint -> endpoint.baseUri("/oauth2/authorization"))
-                        .defaultSuccessUrl("/api/v1/dashboard/statistics", true)
+                        .successHandler((request, response, authentication) -> {
+                            response.sendRedirect("https://dark-trace-frontend.vercel.app/");
+                        })
                 );
 
 
