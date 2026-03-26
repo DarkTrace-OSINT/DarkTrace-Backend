@@ -17,11 +17,12 @@ public class SystemSetting extends BaseEntity {
 
     private String telegramBotToken;
     private String telegramChatId;
+
     private boolean isAlertActive = true;
 
-    // [추가] 서비스에서 호출하는 업데이트 로직
-    public void updateConfig(String token, String chatId) {
+    public void updateConfig(String token, String chatId, boolean isEnabled) {
         this.telegramBotToken = token;
         this.telegramChatId = chatId;
+        this.isAlertActive = isEnabled;
     }
 }

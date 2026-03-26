@@ -31,7 +31,7 @@ public class JwtProvider {
 
     @PostConstruct
     protected void init() {
-        // [수정] 최신 버전도 Keys.hmacShaKeyFor는 동일합니다.
+        // 최신 버전도 Keys.hmacShaKeyFor는 동일
         this.secretKey = Keys.hmacShaKeyFor(salt.getBytes(StandardCharsets.UTF_8));
     }
 

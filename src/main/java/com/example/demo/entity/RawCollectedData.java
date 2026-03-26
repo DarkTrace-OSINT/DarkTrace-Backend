@@ -17,7 +17,6 @@ public class RawCollectedData extends BaseEntity {
 
     private Long siteId;
 
-    // name을 명시적으로 "raw_content"라고 박아버립니다.
     @Column(name = "raw_content", columnDefinition = "TEXT")
     private String rawContent;
 

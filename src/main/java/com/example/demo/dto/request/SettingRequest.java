@@ -8,5 +8,6 @@ import java.util.List;
 public record SettingRequest(
         String telegramBotToken,
         String telegramChatId,
+        boolean isAlertEnabled,
         List<String> keywords
 ) {}

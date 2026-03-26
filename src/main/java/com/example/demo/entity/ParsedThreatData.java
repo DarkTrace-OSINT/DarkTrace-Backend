@@ -20,9 +20,12 @@ public class ParsedThreatData extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String leakContent;
+    @Column(name = "title")
+    private String title;
 
     public static ParsedThreatData create(Long rawId, String indicatorValue, String sourceName, String title, String content) {
         ParsedThreatData data = new ParsedThreatData();
+        data.title = title;
         data.rawId = rawId;
         data.indicatorValue = indicatorValue;
         data.sourceName = sourceName;
