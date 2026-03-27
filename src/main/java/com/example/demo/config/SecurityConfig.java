@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**", "/login/**", "/oauth2/**").permitAll()
                         .requestMatchers("/api/v1/dashboard/**").permitAll()
                         .requestMatchers("/api/v1/ingestion/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -75,7 +76,7 @@ public class SecurityConfig {
                 "https://dark-trace-frontend.vercel.app",
                 "https://unpercipient-woodrow-nonrecurent.ngrok-free.dev"
         ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "ngrok-skip-browser-warning", "X-API-KEY"));
         config.setAllowCredentials(true);
 
