@@ -83,7 +83,7 @@ public class ParsingService {
                 parsedDataRepository.saveAll(parsedList);
                 log.info("   -> parsed_threat_data 테이블 저장 완료: {}건", parsedList.size());
 
-//                alertService.sendTelegramAlert("위협 감지! " + site.getSourceName() + "에서 " + credentials.size() + "건의 정보 유출");
+                alertService.sendTelegramAlert("위협 감지 " + site.getSourceName() + "에서 " + credentials.size() + "건의 정보 유출");
                 alertSent = true;
             }
         }

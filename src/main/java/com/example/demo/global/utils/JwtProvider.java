@@ -59,6 +59,11 @@ public class JwtProvider {
 
         // 권한 정보 추출
         String role = claims.get("role", String.class);
+        
+        if (role == null || role.isEmpty()) {
+            role = "ROLE_USER";
+        }
+
         List<SimpleGrantedAuthority> authorities =
                 Collections.singletonList(new SimpleGrantedAuthority(role));
 
