@@ -1,11 +1,19 @@
 package com.example.demo.dto.request;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+
 /**
  * [API 5] 조치 업데이트 요청 규격
  */
 public record ActionUpdateRequest(
-        Long parsedId,      // 대상 유출 데이터 ID
-        Long adminId,       // 조치한 관리자 ID
-        String actionStatus, // 상태: OPEN, RESOLVED 등
-        String actionNote    // 관리자 조치 메모
+
+        @NotNull(message = "parsedId 필수")
+        Long parsedId,
+        @NotNull(message = "adminId 필수")
+        Long adminId,
+        @NotNull(message = "actionStatus 필수")
+        String actionStatus,
+        @NotBlank(message = "actionNote 필수")
+        String actionNote
 ) {}

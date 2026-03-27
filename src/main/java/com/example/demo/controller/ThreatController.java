@@ -6,6 +6,7 @@ import com.example.demo.dto.response.ActionUpdateResponse;
 import com.example.demo.dto.response.ApiResponse;
 import com.example.demo.dto.response.ThreatSearchResponse;
 import com.example.demo.service.DataProcessService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +25,7 @@ public class ThreatController {
 
     // [API 5] 위협 조치 업데이트
     @PatchMapping("/action")
-    public ApiResponse<ActionUpdateResponse> updateAction(@RequestBody ActionUpdateRequest request) {
+    public ApiResponse<ActionUpdateResponse> updateAction(@Valid @RequestBody ActionUpdateRequest request) {
         return ApiResponse.success(dataProcessService.updateThreatAction(request));
     }
 }
