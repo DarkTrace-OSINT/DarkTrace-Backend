@@ -161,14 +161,25 @@ public class DataProcessService {
      */
     @Transactional
     public ActionUpdateResponse updateThreatAction(ActionUpdateRequest request) {
-        // [사진 12 대응] createNew -> createInitial로 명칭 수정
+        if (request.parsedId() == null) {
+            throw new IllegalArgumentException("parsedId는 필수입니다.");
+        }
+
         IncidentResponse incident = incidentRepository.findByParsedId(request.parsedId())
-                .orElseGet(() -> IncidentResponse.createInitial(request.parsedId(), request.adminId()));
+                .orElse(null);
 
-        incident.updateAction(request.actionStatus(), request.actionNote(), request.adminId());
-        IncidentResponse saved = incidentRepository.save(incident);
+        if (incident == null) {
+            incident = IncidentResponse.createInitial(request.parsedId(), request.adminId());
+            incident.updateAction(request.actionStatus(), request.actionNote(), request.adminId());
+            incident = incidentRepository.save(incident);
+        } else {
+            incident.updateAction(request.actionStatus(), request.actionNote(), request.adminId());
+        }
 
-        return new ActionUpdateResponse(saved.getId(), saved.getUpdatedAt());
+        return new ActionUpdateResponse(
+                incident.getId(),
+                incident.getUpdatedAt()
+        );
     }
 
     /**
