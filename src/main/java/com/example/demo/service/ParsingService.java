@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import com.example.demo.global.utils.RegexParser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +26,11 @@ public class ParsingService {
 
     private final RawCollectedDataRepository rawDataRepository;
     private final ParsedThreatDataRepository parsedDataRepository;
+    private final ThreatIndicatorRepository indicatorRepository;
+    private final TargetSiteRepository siteRepository;
     private final DetectionKeywordRepository keywordRepository;
     private final AlertService alertService;
+    private final RegexParser regexParser;
 
     // [정규식 고도화] 이메일/ID : PW 패턴
     private static final Pattern CREDENTIAL_PATTERN =
@@ -34,11 +38,14 @@ public class ParsingService {
 
     public IngestionResponse processRawData(IngestionRequest request) {
         // 1. 원본 저장 및 유효성 검사
-        if (!StringUtils.hasText(request.rawText())) {
-            throw new DataParsingException(ErrorCode.DATA_PARSING_ERROR);
-        }
         RawCollectedData raw = rawDataRepository.save(RawCollectedData.of(request.siteId(), request.rawText()));
 
+        // 2. [추가] ThreatIndicator(이메일, IP 등) 추출 및 저장
+        TargetSite site = siteRepository.findById(request.siteId()).orElseThrow();
+        List<ThreatIndicator> indicators = regexParser.parseIndicators(site, request.rawText());
+        if (!indicators.isEmpty()) {
+            indicatorRepository.saveAll(indicators); // 드디어 DB에 저장!
+        }
         // 2. 실시간 키워드 매칭
         List<DetectionKeyword> activeKeywords = keywordRepository.findAllByActiveTrue();
         boolean isMatch = activeKeywords.stream()
