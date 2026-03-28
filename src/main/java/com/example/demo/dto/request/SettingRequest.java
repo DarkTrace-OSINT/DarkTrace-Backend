@@ -1,5 +1,6 @@
 package com.example.demo.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
@@ -8,6 +9,7 @@ import java.util.List;
 public record SettingRequest(
         String telegramBotToken,
         String telegramChatId,
+        @JsonProperty("isAlertEnabled") // JSON의 키값과 매핑을 명확히 함
         boolean isAlertEnabled,
         List<String> keywords
 ) {}

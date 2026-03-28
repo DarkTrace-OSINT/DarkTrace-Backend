@@ -216,11 +216,17 @@ public class DataProcessService {
         );
         SystemSetting savedSetting = settingRepository.save(setting);
 
+        // 기존 키워드 삭제
         keywordRepository.deleteAllInBatch();
 
+        // 활성화 상태를 true로 설정
         List<DetectionKeyword> newKeywords = request.keywords().stream()
                 .distinct()
-                .map(DetectionKeyword::of)
+                .map(word -> {
+                    DetectionKeyword keyword = DetectionKeyword.of(word);
+                    keyword.setActive(true); // 0x01로 저장
+                    return keyword;
+                })
                 .toList();
 
         keywordRepository.saveAll(newKeywords);
