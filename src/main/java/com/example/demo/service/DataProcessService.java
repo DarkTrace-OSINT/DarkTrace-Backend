@@ -12,7 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.data.domain.Sort;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -98,7 +98,7 @@ public class DataProcessService {
                             : "N/A";
 
                     // 조치 상태 조회 (연결된 인시던트가 없으면 기본 "OPEN")
-                    String status = incidentRepository.findByParsedId(data.getId())
+                    String status = incidentRepository.findByParseId(data.getId())
                             .map(IncidentResponse::getActionStatus)
                             .orElse("OPEN");
 
@@ -121,36 +121,36 @@ public class DataProcessService {
         );
     }
 
+    /**
+     * [API 4] 위협 검색
+     */
     public ThreatSearchResponse searchThreats(ThreatSearchRequest request) {
-        // 1. 페이지/사이즈 방어
         int page = (request.page() != null) ? request.page() : 0;
         int size = (request.size() != null) ? request.size() : 10;
-        Pageable pageable = PageRequest.of(page, size);
 
-        // 2. 전체 데이터 조회
-        Page<ParsedThreatData> resultPage = parsedDataRepository.findAll(pageable);
+        org.springframework.data.domain.Pageable pageable =
+                org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
 
-        if (resultPage == null || resultPage.isEmpty()) {
-            return new ThreatSearchResponse(java.util.Collections.emptyList(), 0);
-        }
+        IndicatorType type = IndicatorType.valueOf(request.indicatorType());
+        ActionStatus status = ActionStatus.valueOf(request.actionStatus());
 
-        // 3. 변환 로직
+        Page<ParsedThreatData> resultPage = parsedDataRepository.findByIndicatorValueContainingAndIndicatorTypeAndActionStatus(
+                request.keyword() != null ? request.keyword() : "",
+                type,
+                status,
+                pageable
+        );
+
         List<ThreatSearchResponse.ThreatIndicatorResponse> content = resultPage.getContent().stream()
-                .map(data -> {
-                    String dateLabel = (data.getCreatedAt() != null)
-                            ? data.getCreatedAt().toLocalDate().toString()
-                            : java.time.LocalDate.now().toString();
-
-                    return new ThreatSearchResponse.ThreatIndicatorResponse(
-                            data.getTitle() != null ? data.getTitle() : "제목 없음",
-                            data.getId(),
-                            data.getIndicatorValue() != null ? data.getIndicatorValue() : "N/A",
-                            "EMAIL", // 필요시 data.getType()으로 변경
-                            data.getSourceName() != null ? data.getSourceName() : "Unknown",
-                            dateLabel,
-                            "OPEN"
-                    );
-                })
+                .map(data -> new ThreatSearchResponse.ThreatIndicatorResponse(
+                        data.getLeakTitle() != null ? data.getLeakTitle() : "제목 없음",
+                        data.getId(),
+                        data.getIndicatorValue(),
+                        data.getIndicatorType().name(),
+                        data.getSourceName(),
+                        data.getCreatedAt().toLocalDate().toString(),
+                        data.getActionStatus().name()
+                ))
                 .toList();
 
         return new ThreatSearchResponse(content, resultPage.getTotalPages());
@@ -161,20 +161,27 @@ public class DataProcessService {
      */
     @Transactional
     public ActionUpdateResponse updateThreatAction(ActionUpdateRequest request) {
-        if (request.parsedId() == null) {
-            throw new IllegalArgumentException("parsedId는 필수입니다.");
+
+        if (request.parseId() == null) {
+            throw new IllegalArgumentException("parseId는 필수입니다.");
         }
 
-        IncidentResponse incident = incidentRepository.findByParsedId(request.parsedId())
+        IncidentResponse incident = incidentRepository.findByParseId(request.parseId())
                 .orElse(null);
 
         if (incident == null) {
-            incident = IncidentResponse.createInitial(request.parsedId(), request.adminId());
+            incident = IncidentResponse.createInitial(request.parseId(), request.adminId());
             incident.updateAction(request.actionStatus(), request.actionNote(), request.adminId());
             incident = incidentRepository.save(incident);
         } else {
             incident.updateAction(request.actionStatus(), request.actionNote(), request.adminId());
         }
+
+        parsedDataRepository.findById(request.parseId()).ifPresent(data -> {
+            // String으로 온 상태값을 Enum으로 바꿔서 저장
+            data.setActionStatus(ActionStatus.valueOf(request.actionStatus()));
+            data.setActionNote(request.actionNote());
+        });
 
         return new ActionUpdateResponse(
                 incident.getId(),
