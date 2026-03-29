@@ -8,7 +8,7 @@ public interface DetectionKeywordRepository extends JpaRepository<DetectionKeywo
 
     /**
      * [API 7] 활성화 상태(is_active = true)인 키워드들만
-     * 조회할 때 사용합니다.
+     * 조회할 때 사용
      */
 
     List<DetectionKeyword> findAllByActiveTrue();

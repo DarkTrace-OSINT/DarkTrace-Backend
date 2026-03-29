@@ -16,7 +16,7 @@ public class IncidentResponse extends BaseEntity {
     private Long id; // 고유 번호
 
     @Column(unique = true)
-    private Long parsedId; // 탐지된 데이터의 ID
+    private Long parseId; // 탐지된 데이터의 ID
 
     private Long adminId;  // 조치한 관리자 ID
 
@@ -26,7 +26,7 @@ public class IncidentResponse extends BaseEntity {
 
     public static IncidentResponse createInitial(Long parsedId, Long adminId) {
         IncidentResponse res = new IncidentResponse();
-        res.parsedId = parsedId;
+        res.parseId = parsedId;
         res.adminId = adminId;
         res.actionStatus = "OPEN";
         return res;

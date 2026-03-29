@@ -8,8 +8,8 @@ import jakarta.validation.constraints.NotBlank;
  */
 public record ActionUpdateRequest(
 
-        @NotNull(message = "parsedId 필수")
-        Long parsedId,
+        @NotNull(message = "parseId 필수")
+        Long parseId,
         @NotNull(message = "adminId 필수")
         Long adminId,
         @NotNull(message = "actionStatus 필수")
