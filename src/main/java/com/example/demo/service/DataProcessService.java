@@ -127,20 +127,29 @@ public class DataProcessService {
     public ThreatSearchResponse searchThreats(ThreatSearchRequest request) {
         int page = (request.page() != null) ? request.page() : 0;
         int size = (request.size() != null) ? request.size() : 10;
-
         org.springframework.data.domain.Pageable pageable =
                 org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
 
-        IndicatorType type = IndicatorType.valueOf(request.indicatorType());
-        ActionStatus status = ActionStatus.valueOf(request.actionStatus());
+        Page<ParsedThreatData> resultPage;
 
-        Page<ParsedThreatData> resultPage = parsedDataRepository.findByIndicatorValueContainingAndIndicatorTypeAndActionStatus(
-                request.keyword() != null ? request.keyword() : "",
-                type,
-                status,
-                pageable
-        );
+        // null일 경우(ALL) 보호막 설치
+        if (request.indicatorType() == null || request.actionStatus() == null) {
+            // 클라에서 필터가 안 오면(ALL 선택 시) 전체 데이터를 조회
+            resultPage = parsedDataRepository.findAll(pageable);
+        } else {
+            // 값이 있을 때만 필터링 조회 (Enum 변환 성공)
+            IndicatorType type = IndicatorType.valueOf(request.indicatorType());
+            ActionStatus status = ActionStatus.valueOf(request.actionStatus());
 
+            resultPage = parsedDataRepository.findByIndicatorValueContainingAndIndicatorTypeAndActionStatus(
+                    request.keyword() != null ? request.keyword() : "",
+                    type,
+                    status,
+                    pageable
+            );
+        }
+
+        // 데이터 변환 로직 (title 매핑 확인 완료)
         List<ThreatSearchResponse.ThreatIndicatorResponse> content = resultPage.getContent().stream()
                 .map(data -> new ThreatSearchResponse.ThreatIndicatorResponse(
                         data.getLeakTitle() != null ? data.getLeakTitle() : "제목 없음",
