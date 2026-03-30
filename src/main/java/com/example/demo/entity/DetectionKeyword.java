@@ -9,7 +9,7 @@ import lombok.Setter; // 1. Setter 추가
 @Entity
 @Table(name = "detection_keywords")
 @Getter
-@Setter // 2. 여기에 Setter를 붙여야 서비스에서 setActive()를 쓸 수 있습니다!
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DetectionKeyword extends BaseEntity {
 
