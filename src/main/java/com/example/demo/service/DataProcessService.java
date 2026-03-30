@@ -127,38 +127,54 @@ public class DataProcessService {
     public ThreatSearchResponse searchThreats(ThreatSearchRequest request) {
         int page = (request.page() != null) ? request.page() : 0;
         int size = (request.size() != null) ? request.size() : 10;
-        org.springframework.data.domain.Pageable pageable =
-                org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
+
+        String keyword = (request.keyword() != null) ? request.keyword() : "";
+
+        IndicatorType type = null;
+        ActionStatus status = null;
+
+        if (request.indicatorType() != null && !request.indicatorType().isBlank()) {
+            type = IndicatorType.valueOf(request.indicatorType());
+        }
+
+        if (request.actionStatus() != null && !request.actionStatus().isBlank()) {
+            status = ActionStatus.valueOf(request.actionStatus());
+        }
 
         Page<ParsedThreatData> resultPage;
 
-        // null일 경우(ALL) 보호막 설치
-        if (request.indicatorType() == null || request.actionStatus() == null) {
-            // 클라에서 필터가 안 오면(ALL 선택 시) 전체 데이터를 조회
-            resultPage = parsedDataRepository.findAll(pageable);
+        if (type == null && status == null) {
+            resultPage = parsedDataRepository.findByIndicatorValueContaining(keyword, pageable);
+        } else if (type != null && status == null) {
+            resultPage = parsedDataRepository.findByIndicatorValueContainingAndIndicatorType(
+                    keyword, type, pageable
+            );
+        } else if (type == null) {
+            resultPage = parsedDataRepository.findByIndicatorValueContainingAndActionStatus(
+                    keyword, status, pageable
+            );
         } else {
-            // 값이 있을 때만 필터링 조회 (Enum 변환 성공)
-            IndicatorType type = IndicatorType.valueOf(request.indicatorType());
-            ActionStatus status = ActionStatus.valueOf(request.actionStatus());
-
             resultPage = parsedDataRepository.findByIndicatorValueContainingAndIndicatorTypeAndActionStatus(
-                    request.keyword() != null ? request.keyword() : "",
-                    type,
-                    status,
-                    pageable
+                    keyword, type, status, pageable
             );
         }
 
-        // 데이터 변환 로직 (title 매핑 확인 완료)
         List<ThreatSearchResponse.ThreatIndicatorResponse> content = resultPage.getContent().stream()
                 .map(data -> new ThreatSearchResponse.ThreatIndicatorResponse(
-                        data.getLeakTitle() != null ? data.getLeakTitle() : "제목 없음",
+                        data.getLeakTitle() != null ? data.getLeakTitle()
+                                : (data.getTitle() != null ? data.getTitle() : "제목 없음"),
                         data.getId(),
-                        data.getIndicatorValue(),
-                        data.getIndicatorType().name(),
-                        data.getSourceName(),
-                        data.getCreatedAt().toLocalDate().toString(),
-                        data.getActionStatus().name()
+                        data.getIndicatorValue() != null ? data.getIndicatorValue() : "-",
+                        data.getIndicatorType() != null ? data.getIndicatorType().name() : "EMAIL",
+                        data.getSourceName() != null ? data.getSourceName() : "-",
+                        data.getCreatedAt() != null ? data.getCreatedAt().toLocalDate().toString() : "-",
+                        data.getActionStatus() != null ? data.getActionStatus().name() : "OPEN"
                 ))
                 .toList();
 
