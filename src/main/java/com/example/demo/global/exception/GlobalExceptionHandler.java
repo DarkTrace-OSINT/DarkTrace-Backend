@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataParsingException.class)
     protected ResponseEntity<ApiResponse<Void>> handleDataParsingException(DataParsingException e) {
-        ErrorCode ec = e.getErrorCode(); // Enum을 가져옴
+        ErrorCode ec = e.getErrorCode();
         return ResponseEntity
                 .status(ec.getStatus())
                 .body(ApiResponse.error(ec.getStatus(), ec.getCode(), ec.getMessage()));
