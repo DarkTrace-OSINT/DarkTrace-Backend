@@ -222,11 +222,7 @@ public class DataProcessService {
         // 활성화 상태를 true로 설정
         List<DetectionKeyword> newKeywords = request.keywords().stream()
                 .distinct()
-                .map(word -> {
-                    DetectionKeyword keyword = DetectionKeyword.of(word);
-                    keyword.setActive(true); // 0x01로 저장
-                    return keyword;
-                })
+                .map(DetectionKeyword::of)
                 .toList();
 
         keywordRepository.saveAll(newKeywords);

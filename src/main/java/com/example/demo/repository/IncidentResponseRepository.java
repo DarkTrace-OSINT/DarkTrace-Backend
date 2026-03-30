@@ -9,6 +9,6 @@ public interface IncidentResponseRepository extends JpaRepository<IncidentRespon
     // 조치 상태별 카운트 (OPEN, RESOLVED)
     long countByActionStatus(String actionStatus);
     // 특정 유출 데이터(parsedId)에 대한 조치 이력을 찾기 위해 필요
-    Optional<IncidentResponse> findByParsedId(Long parsedId);
+    Optional<IncidentResponse> findByParseId(Long parseId);
 
 }

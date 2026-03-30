@@ -18,14 +18,7 @@ public class TargetSite extends BaseEntity {
     private Long id;
     private String sourceName;
     private String url;
-    private String crawlerStatus; // ALIVE, DEAD, ERROR
+    private String crawlerStatus;
     private LocalDateTime lastCrawledAt;
 
-    public static TargetSite createSite(String sourceName, String url) {
-        TargetSite site = new TargetSite();
-        site.sourceName = sourceName;
-        site.url = url;
-        site.crawlerStatus = "ALIVE";
-        return site;
-    }
 }
