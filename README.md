@@ -10,27 +10,6 @@ DeepRadar - Cyber Threat Intelligence Platform
 
 전체 시스템은 수집기(Collector), 데이터 처리기(Parser), API Gateway, Database, Dashboard를 하나의 파이프라인으로 연결하여 실시간 위협 정보를 관리할 수 있도록 설계하였습니다.
 
-시스템 아키텍처
-Crawler / Collector
-        │
-        ▼
-API Gateway
-        │
-        ▼
-Regex Parser
-        │
-        ▼
-Validation
-        │
-        ▼
-Database
-        │
-        ▼
-Dashboard
-        │
-        ▼
-Telegram Notification
-
 API Gateway를 중심으로 모든 데이터가 통합 처리되며, 데이터 검증 이후에만 Database에 저장되도록 설계하였습니다.
 
 주요 기능
